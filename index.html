@@ -103,6 +103,18 @@ select:focus,input[type=text]:focus{border-color:var(--accent)}
 }
 #btn-chart:hover{background:#0f4a88}
 
+/* ── ZOOM CONTROLS ── */
+.zoom-controls{
+  display:flex;align-items:center;gap:4px;margin-left:10px;
+  background:#f0f2f5;border:1px solid var(--border);border-radius:3px;padding:2px;
+}
+.zoom-controls button{
+  background:transparent;border:none;cursor:pointer;font-size:10px;
+  padding:4px;border-radius:2px;color:var(--text);transition:background .2s;
+}
+.zoom-controls button:hover{background:#dde6f5}
+#zoom-level{font-size:11px;color:var(--muted);width:36px;text-align:center;}
+
 /* ── MODAL ── */
 #chart-modal{
   display:none;position:fixed;top:0;left:0;right:0;bottom:0;
@@ -128,11 +140,11 @@ select:focus,input[type=text]:focus{border-color:var(--accent)}
 #table-wrap{flex:1;overflow:auto}
 #table-wrap::-webkit-scrollbar{width:6px;height:6px}
 #table-wrap::-webkit-scrollbar-thumb{background:var(--border)}
-table{width:100%;border-collapse:collapse;table-layout:fixed}
+table{width:100%;min-width:calc(100% * var(--z, 1));border-collapse:collapse;table-layout:fixed}
 thead th{
   position:sticky;top:0;z-index:10;
   background:#e8edf5;border-bottom:2px solid var(--border);
-  padding:6px 8px;text-align:center !important;font-size:10px;font-weight:600;
+  padding:calc(6px * var(--z, 1)) calc(8px * var(--z, 1));text-align:center !important;font-size:calc(10px * var(--z, 1));font-weight:600;
   letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
   white-space:nowrap;cursor:pointer;user-select:none;
 }
@@ -142,22 +154,22 @@ thead th.sorted-desc::after{content:" ↓";color:var(--accent)}
 tbody tr:nth-child(even){background:var(--row-even)}
 tbody tr:nth-child(odd){background:var(--row-odd)}
 tbody tr:hover{background:#dde6f5}
-td{padding:5px 8px;border-bottom:1px solid #e4e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;text-align:center !important}
-.td-km{font-weight:600;color:var(--accent2);width:64px}
-.td-sent{width:70px}
-.td-dist{width:50px;color:var(--muted)}
-.td-acum{width:70px;color:#2b6aa8;font-weight:500}
-.td-blq{width:100px;font-size:11px;color:#5a6680}
-.td-vn{color:var(--vn);font-weight:600;width:44px}
-.td-va{color:var(--va);font-weight:600;width:44px}
-.td-vb{color:var(--vb);font-weight:600;width:44px}
+td{padding:calc(5px * var(--z, 1)) calc(8px * var(--z, 1));font-size:calc(13px * var(--z, 1));border-bottom:1px solid #e4e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;text-align:center !important}
+.td-km{font-weight:600;color:var(--accent2);width:calc(64px * var(--z, 1))}
+.td-sent{width:calc(70px * var(--z, 1))}
+.td-dist{width:calc(50px * var(--z, 1));color:var(--muted)}
+.td-acum{width:calc(70px * var(--z, 1));color:#2b6aa8;font-weight:500}
+.td-blq{width:calc(100px * var(--z, 1));font-size:calc(11px * var(--z, 1));color:#5a6680}
+.td-vn{color:var(--vn);font-weight:600;width:calc(44px * var(--z, 1))}
+.td-va{color:var(--va);font-weight:600;width:calc(44px * var(--z, 1))}
+.td-vb{color:var(--vb);font-weight:600;width:calc(44px * var(--z, 1))}
 .cell-orange{background-color:#ffe082 !important; color:#8c4a00 !important; border-radius:3px;}
-.td-dep{max-width:160px}
-.td-di{width:54px;color:var(--muted)}
-.td-rad{width:54px}
-.td-grad{width:60px}
-.td-sen{font-size:11px}
-.td-obs{font-size:11px;color:#5a6a88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.td-dep{max-width:calc(160px * var(--z, 1))}
+.td-di{width:calc(54px * var(--z, 1));color:var(--muted)}
+.td-rad{width:calc(54px * var(--z, 1))}
+.td-grad{width:calc(60px * var(--z, 1))}
+.td-sen{font-size:calc(11px * var(--z, 1))}
+.td-obs{font-size:calc(11px * var(--z, 1));color:#5a6a88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .badge-sent{
   display:inline-block;padding:1px 6px;border-radius:2px;font-size:10px;font-weight:600;letter-spacing:.04em;
@@ -215,6 +227,11 @@ td{padding:5px 8px;border-bottom:1px solid #e4e8f0;white-space:nowrap;overflow:h
       </div>
       <div class="stat-badge" id="stat-badge"><b>0</b> registros</div>
       <button id="btn-chart">📊 Gráfica</button>
+      <div class="zoom-controls">
+        <button id="btn-zoom-out" title="Reducir zoom">➖</button>
+        <span id="zoom-level">100%</span>
+        <button id="btn-zoom-in" title="Ampliar zoom">➕</button>
+      </div>
     </div>
     <div id="table-wrap">
       <div id="empty" style="display:flex">
@@ -389,7 +406,10 @@ function renderTable(rows){
     const sent = r.Sentido==='Par'
       ? `<span class="badge-sent badge-par">Par</span>`
       : `<span class="badge-sent badge-imp">Impar</span>`;
-    tr.innerHTML = `
+      const rawObs = (r.Observaciones??'').toString().replace(/\(\*\)/g,' ');
+      const titleObs = rawObs.replace(/"/g,'&quot;');
+      const htmlObs = rawObs.replace(/\[.*?\]/g, match => `<span style="color:#b84b1a; font-weight:600;">${match}</span>`);
+      tr.innerHTML = `
       <td class="td-sent">${sent}</td>
       <td class="td-km">${r['Sit.Km']??''}</td>
       <td class="td-dist">${r['Dist.']??''}</td>
@@ -403,7 +423,7 @@ function renderTable(rows){
       <td class="td-rad">${r.Rad??''}</td>
       <td class="td-grad">${r.Gradiente??''}</td>
       <td class="td-sen" title="${r['Sistema Señ.']??''}">${r['Sistema Señ.']??''}</td>
-      <td class="td-obs" title="${(r.Observaciones??'').toString().replace(/\(\*\)/g,' ').replace(/"/g,'&quot;')}">${(r.Observaciones??'').toString().replace(/\(\*\)/g,' ')}</td>`;
+      <td class="td-obs" title="${titleObs}">${htmlObs}</td>`;
     tbody.appendChild(tr);
   });
 }
@@ -601,6 +621,19 @@ function drawChart(){
 document.getElementById('btn-chart').addEventListener('click',openChart);
 document.getElementById('chart-sent-select').addEventListener('change',drawChart);
 document.getElementById('chart-show-avg').addEventListener('change',drawChart);
+
+// ── Zoom ──
+let currentZoom = 1;
+document.getElementById('btn-zoom-in').addEventListener('click', ()=>{
+  if(currentZoom < 2.0) { currentZoom += 0.1; updateZoom(); }
+});
+document.getElementById('btn-zoom-out').addEventListener('click', ()=>{
+  if(currentZoom > 0.5) { currentZoom -= 0.1; updateZoom(); }
+});
+function updateZoom(){
+  document.documentElement.style.setProperty('--z', currentZoom);
+  document.getElementById('zoom-level').textContent = Math.round(currentZoom * 100) + '%';
+}
 
 </script>
 </body>
