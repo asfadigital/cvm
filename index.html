@@ -140,7 +140,7 @@ select:focus,input[type=text]:focus{border-color:var(--accent)}
 #table-wrap{flex:1;overflow:auto}
 #table-wrap::-webkit-scrollbar{width:6px;height:6px}
 #table-wrap::-webkit-scrollbar-thumb{background:var(--border)}
-table{width:100%;min-width:calc(100% * var(--z, 1));border-collapse:collapse;table-layout:fixed}
+table{width:100%;min-width:calc(100% * var(--z, 1));border-collapse:collapse;table-layout:auto}
 thead th{
   position:sticky;top:0;z-index:10;
   background:#e8edf5;border-bottom:2px solid var(--border);
@@ -154,7 +154,7 @@ thead th.sorted-desc::after{content:" ↓";color:var(--accent)}
 tbody tr:nth-child(even){background:var(--row-even)}
 tbody tr:nth-child(odd){background:var(--row-odd)}
 tbody tr:hover{background:#dde6f5}
-td{padding:calc(5px * var(--z, 1)) calc(8px * var(--z, 1));font-size:calc(13px * var(--z, 1));border-bottom:1px solid #e4e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;text-align:center !important}
+td{padding:calc(5px * var(--z, 1)) calc(8px * var(--z, 1));font-size:calc(13px * var(--z, 1));border-bottom:1px solid #e4e8f0;white-space:nowrap;overflow:visible;vertical-align:middle;text-align:center !important}
 .td-km{font-weight:600;color:var(--accent2);width:calc(64px * var(--z, 1))}
 .td-sent{width:calc(70px * var(--z, 1))}
 .td-dist{width:calc(50px * var(--z, 1));color:var(--muted)}
@@ -164,12 +164,12 @@ td{padding:calc(5px * var(--z, 1)) calc(8px * var(--z, 1));font-size:calc(13px *
 .td-va{color:var(--va);font-weight:600;width:calc(44px * var(--z, 1))}
 .td-vb{color:var(--vb);font-weight:600;width:calc(44px * var(--z, 1))}
 .cell-orange{background-color:#ffe082 !important; color:#8c4a00 !important; border-radius:3px;}
-.td-dep{max-width:calc(160px * var(--z, 1))}
+.td-dep{/* removed max-width */}
 .td-di{width:calc(54px * var(--z, 1));color:var(--muted)}
 .td-rad{width:calc(54px * var(--z, 1))}
 .td-grad{width:calc(60px * var(--z, 1))}
 .td-sen{font-size:calc(11px * var(--z, 1))}
-.td-obs{font-size:calc(11px * var(--z, 1));color:#5a6a88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.td-obs{font-size:calc(11px * var(--z, 1));color:#5a6a88;white-space:normal;min-width:calc(200px * var(--z, 1));max-width:calc(450px * var(--z, 1))}
 
 .badge-sent{
   display:inline-block;padding:1px 6px;border-radius:2px;font-size:10px;font-weight:600;letter-spacing:.04em;
