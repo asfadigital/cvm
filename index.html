@@ -197,7 +197,10 @@ td{padding:calc(5px * var(--z, 1)) calc(8px * var(--z, 1));font-size:calc(13px *
     <h1 id="ptitle"></h1>
     <div class="sub" id="pdate"></div>
   </div>
-  <div class="sources-badge" id="psources"></div>
+  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+    <div style="background:#e74c3c; color:white; padding:4px 10px; border-radius:4px; font-weight:bold; font-size:11px; letter-spacing:1px; text-transform:uppercase; box-shadow:0 2px 4px rgba(0,0,0,0.2);">VERSIÓN DE PRUEBA</div>
+    <div class="sources-badge" id="psources"></div>
+  </div>
 </div>
 <div id="app">
   <div id="sidebar">
@@ -277,9 +280,12 @@ td{padding:calc(5px * var(--z, 1)) calc(8px * var(--z, 1));font-size:calc(13px *
           <option value="Par">Par</option>
           <option value="Impar">Impar</option>
         </select>
+        <label style="margin-left:20px"><input type="checkbox" id="chart-show-vn" checked/> V.N</label>
+        <label style="margin-left:10px"><input type="checkbox" id="chart-show-va"/> V.A</label>
+        <label style="margin-left:10px"><input type="checkbox" id="chart-show-vb"/> V.B</label>
         <label style="margin-left:20px">
           <input type="checkbox" id="chart-show-avg"/>
-          Mostrar V.N máxima media
+          Media V.N
         </label>
       </div>
       <div id="chart-plot"></div>
@@ -466,16 +472,26 @@ function drawChart(){
     return;
   }
   
+  const showVN = document.getElementById('chart-show-vn').checked;
+  const showVA = document.getElementById('chart-show-va').checked;
+  const showVB = document.getElementById('chart-show-vb').checked;
+  
   const x = rows.map(r=>r._distAccum);
   const y = rows.map(r=>parseFloat(r['V.N'])||0);
+  const ya = rows.map(r=>parseFloat(r['V.A'])||0);
+  const yb = rows.map(r=>parseFloat(r['V.B'])||0);
   const dist = rows.map(r=>parseFloat(r['Dist.'])||0);
   const dep = rows.map(r=>r.Dependencias||'—');
   
   // Calcular máximos
-  const maxX = Math.max(...x);
-  const maxY = Math.max(...y);
+  const maxX = Math.max(...x, 1);
+  let maxY = 0;
+  if(showVN) maxY = Math.max(maxY, ...y);
+  if(showVA) maxY = Math.max(maxY, ...ya);
+  if(showVB) maxY = Math.max(maxY, ...yb);
+  if(maxY === 0) maxY = 100;
   
-  // Calcular velocidad media ponderada por distancia
+  // Calcular velocidad media ponderada por distancia (solo VN de momento)
   const totalDist = dist.reduce((a,b)=>a+b,0);
   const weightedSum = y.reduce((sum,v,i)=>sum + v*dist[i], 0);
   const avgY = totalDist > 0 ? weightedSum / totalDist : 0;
@@ -491,17 +507,34 @@ function drawChart(){
     ticktext.push(val.toFixed(1));
   }
   
-  const trace = {
-    x:x, y:y,
-    mode:'lines+markers',
-    name:'V.N',
-    line:{color:'#1a5fa8',width:2,shape:'hv'},
-    marker:{size:5,color:'#1a5fa8'},
-    customdata:dep,
-    hovertemplate:'<b>Dist. Acum:</b> %{x:.1f} km<br><b>V.N:</b> %{y} km/h<br><b>Dependencias:</b> %{customdata}<extra></extra>'
-  };
-  
-  const traces = [trace];
+  const traces = [];
+  if(showVN){
+    traces.push({
+      x:x, y:y, mode:'lines+markers', name:'V.N',
+      line:{color:'#1a5fa8',width:2,shape:'hv'},
+      marker:{size:5,color:'#1a5fa8'},
+      customdata:dep,
+      hovertemplate:'<b>Dist. Acum:</b> %{x:.1f} km<br><b>V.N:</b> %{y} km/h<br><b>Dependencias:</b> %{customdata}<extra></extra>'
+    });
+  }
+  if(showVA){
+    traces.push({
+      x:x, y:ya, mode:'lines+markers', name:'V.A',
+      line:{color:'#1e7a3a',width:2,shape:'hv'},
+      marker:{size:5,color:'#1e7a3a'},
+      customdata:dep,
+      hovertemplate:'<b>Dist. Acum:</b> %{x:.1f} km<br><b>V.A:</b> %{y} km/h<br><b>Dependencias:</b> %{customdata}<extra></extra>'
+    });
+  }
+  if(showVB){
+    traces.push({
+      x:x, y:yb, mode:'lines+markers', name:'V.B',
+      line:{color:'#b84b1a',width:2,shape:'hv'},
+      marker:{size:5,color:'#b84b1a'},
+      customdata:dep,
+      hovertemplate:'<b>Dist. Acum:</b> %{x:.1f} km<br><b>V.B:</b> %{y} km/h<br><b>Dependencias:</b> %{customdata}<extra></extra>'
+    });
+  }
   
   if(showAvg){
     const traceAvg = {
@@ -516,7 +549,7 @@ function drawChart(){
   }
   
   const layout = {
-    title:`Línea ${currentLineKey.replace(/^L0*/,'').split('-')[0]} — Distancia Acumulada vs V.N — Sentido ${sent}`,
+    title:`Línea ${currentLineKey.replace(/^L0*/,'').split('-')[0]} — Gráfica de Velocidades — Sentido ${sent}`,
     xaxis:{
       title:'Distancia Acumulada (km)',
       zeroline:false,
@@ -525,7 +558,7 @@ function drawChart(){
       ticktext:ticktext
     },
     yaxis:{
-      title:'V.N (km/h)',
+      title:'Velocidad (km/h)',
       zeroline:false,
       range:[0, maxY * 1.1],
       fixedrange:true
@@ -620,6 +653,9 @@ function drawChart(){
 
 document.getElementById('btn-chart').addEventListener('click',openChart);
 document.getElementById('chart-sent-select').addEventListener('change',drawChart);
+document.getElementById('chart-show-vn').addEventListener('change',drawChart);
+document.getElementById('chart-show-va').addEventListener('change',drawChart);
+document.getElementById('chart-show-vb').addEventListener('change',drawChart);
 document.getElementById('chart-show-avg').addEventListener('change',drawChart);
 
 // ── Zoom ──
