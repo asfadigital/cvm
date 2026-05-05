@@ -217,14 +217,6 @@ td{padding:calc(5px * var(--z, 1)) calc(8px * var(--z, 1));font-size:calc(13px *
         <select id="filt-sent"><option value="">Todos</option><option>Par</option><option>Impar</option></select>
       </div>
       <div class="filter-group">
-        <label>V.N ≥</label>
-        <input type="number" id="filt-vn" min="0" max="400" style="width:62px" placeholder="–"/>
-      </div>
-      <div class="filter-group">
-        <label>V.N ≤</label>
-        <input type="number" id="filt-vn2" min="0" max="400" style="width:62px" placeholder="–"/>
-      </div>
-      <div class="filter-group">
         <label>Depend.</label>
         <input type="text" id="search-dep" placeholder="Buscar dependencia…"/>
       </div>
@@ -368,14 +360,10 @@ function loadLine(key){
 
 function applyFilters(){
   const sent = document.getElementById('filt-sent').value;
-  const vnMin = parseFloat(document.getElementById('filt-vn').value)||0;
-  const vnMax = parseFloat(document.getElementById('filt-vn2').value)||Infinity;
   const dep   = document.getElementById('search-dep').value.toLowerCase();
 
   let rows = currentRows.filter(r=>{
     if(sent && r.Sentido !== sent) return false;
-    const vn = parseFloat(r['V.N'])||0;
-    if(vn < vnMin || vn > vnMax) return false;
     if(dep && !String(r.Dependencias||'').toLowerCase().includes(dep)) return false;
     return true;
   });
@@ -445,7 +433,7 @@ document.querySelectorAll('thead th[data-col]').forEach((th,i)=>{
 });
 
 // ── Filters ──
-['filt-sent','filt-vn','filt-vn2','search-dep'].forEach(id=>{
+['filt-sent','search-dep'].forEach(id=>{
   document.getElementById(id).addEventListener('input', applyFilters);
 });
 
