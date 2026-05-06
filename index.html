@@ -367,10 +367,21 @@ function applyFilters(){
     document.getElementById('line-title').textContent = `Búsqueda: "${dep}" (Todas las líneas)`;
     // Desactivar selección de sidebar visualmente
     document.querySelectorAll('.line-item').forEach(el=>el.classList.remove('active'));
+    
+    document.getElementById('empty').style.display = 'none';
+    document.getElementById('data-table').style.display = '';
   } else if(currentLineKey){
     rows = currentRows;
     document.getElementById('line-title').textContent = DATA.lines[currentLineKey].title;
     document.querySelectorAll('.line-item').forEach(el=>el.classList.toggle('active', el.dataset.key===currentLineKey));
+    
+    document.getElementById('empty').style.display = 'none';
+    document.getElementById('data-table').style.display = '';
+  } else {
+    // Estado inicial: nada seleccionado ni buscado
+    document.getElementById('empty').style.display = 'flex';
+    document.getElementById('data-table').style.display = 'none';
+    document.getElementById('line-title').textContent = "Selecciona una línea";
   }
 
   if(sent){
